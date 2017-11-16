@@ -82,12 +82,14 @@ def read_digit_file(digFile, rowcells, clmcells):
     # Delete the label from panda dataframe,
     trainDF.drop('label', axis=1)
 
-    digitLst = trainDF.values.tolist()
+    # Pop first column of labels
+    digitLst = np.array(trainDF.values.tolist())[:,1:]
 
-    for i in range(len(digitLst)):
-        digitLst[i] = compress(digitLst[i], rowcells, clmcells)
+    if rowcells*clmcells != 784:
+        for i in range(len(digitLst)):
+            digitLst[i] = compress(digitLst[i], rowcells, clmcells)
 
-    return answerKey, digitLst
+    return answerKey, normalize(digitLst)
 
 
 #########   Explanation  #######################

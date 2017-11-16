@@ -20,7 +20,7 @@ class MLP:
         self.n_input = n_input
         self.n_hidden = n_hidden
         self.n_output = n_output
-        self.n_layer = n_layer + 2
+        self.n_layer = n_layer + 1
         self.W = [0.0] * self.n_layer
         self.A = [0.0] * self.n_layer
         self.E = [0.0] * self.n_layer
@@ -30,7 +30,7 @@ class MLP:
         # Initialize weights and biases of layers according to depth of network
         if self.n_layer < 1:
             raise ValueError('n_layer should be greater or equal to 2')
-        if self.n_layer == 2:
+        if self.n_layer == 1:
             self.W[0] = np.random.normal(scale=0.1, size=(self.n_input, self.n_output))
             self.B[0] = np.zeros((1, self.n_output))
         else:
@@ -50,35 +50,32 @@ class MLP:
         '''Computes derivative of sigmoid function'''
         return y * (1.0 - y)
 
-    def _softmax(self, x):
-        """Compute softmax values for each sets of scores in x."""
-        return np.exp(x) / np.sum(np.exp(x), axis=(0))
+    def _softmax(self, batch_o):
+        return np.array([np.exp(x) / np.exp(x).sum() for x in batch_o])
 
     def feedforward(self, inputs):
         '''Fills the activation matrix of the neurons
         and outputs the results at the end for one epoch'''
-        for depth in range(self.n_layer - 1):
+        for depth in range(self.n_layer):
             # Compute activation of first hidden layer
-            inputs = ntf.normalize(inputs)
             if depth == 0:
                 self.A[depth] = self._sigmoid(np.dot(inputs, self.W[depth]))
             # Activation of every other layer
             else:
                 self.A[depth] = self._sigmoid(np.dot(self.A[depth - 1], self.W[depth]))
-        self.A[-1] = self._softmax(self._sigmoid(np.dot(self.A[-2], self.W[-1])))
+        self.A[depth] = self._softmax(np.dot(self.A[-2], self.W[-1]))
 
-        return self.A[-1]
-
+        return self.A[depth]
 
     def fit(self, inputs, targets, learning_rate=0.01, n_epochs=200000):
         '''Train the weights of a custom network by computing activations from feedforward
         and then backpropagating the errors after one epoch. Uses simple error as loss function.'''
         ERROR = []
-        batch_size = 2
+        batch_size = 10
         numsteps = int(len(inputs) / batch_size) - 1
 
         for j in range(n_epochs):
-            btchstp = j%numsteps
+            btchstp = j % numsteps
             targets_b, batch = ntf.batchify(inputs, targets, batch_size, btchstp)
             # Apply feed forward for epoch
             self.feedforward(batch)
@@ -87,7 +84,7 @@ class MLP:
                 # Squared euclidean distance cost function
                 # Compute the error and derivative error of output layers' neurons
                 if depth == self.n_layer - 1:
-                    self.E[depth] = (targets_b - self.A[depth]) # Derivative of the squared euclidean distance
+                    self.E[depth] = targets_b - self.A[depth]  # Derivative of the squared euclidean distance
                     self.D[depth] = np.multiply(self.E[depth], self._dsigmoid(self.A[depth]))
                 # Compute the error and derivative error of hidden layers' neurons
                 else:
@@ -116,8 +113,8 @@ class MLP:
 
 
 if __name__ == "__main__":
-
-    mlp = MLP(100, 30, 10, 3)
+    mlp = MLP(784, 784, 10, 1)
+    # Test XOR, AND, OR and NOR inputs and targets
     # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
@@ -126,7 +123,10 @@ if __name__ == "__main__":
     #                     [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0]],
     #                     [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
     #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
-
-    answer_key, dgtLst = ntf.read_digit_file('data/smalltrain.csv', 10, 10)
+    print '==========Extracting train set'
+    answer_key, dgtLst = ntf.read_digit_file('../../train.csv', 28, 28)
     targets = ntf.one_hot_vector(answer_key)
-    mlp.fit(dgtLst, targets, learning_rate=0.1, n_epochs=10000000)
+    print '==========Training...'
+    mlp.fit(dgtLst, targets, learning_rate=0.01, n_epochs=10000000)
+    print '==========Training done'
+
