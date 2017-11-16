@@ -99,7 +99,7 @@ def read_digit_file(digFile, rowcells, clmcells):
 #########   Output  #######################
 # will output numpy array of [size x digit features]
 
-def batchify(digitLst, size, step):
+def batchify(digitLst, target_vector, size, step):
     numsteps = int(len(digitLst) / size) - 1
 
     # Debug
@@ -110,48 +110,67 @@ def batchify(digitLst, size, step):
         return 0
     else:
         batch = np.array(digitLst[step * size])
+        target_b = np.array(target_vector[step * size])
         for i in range(1, size):
             tmp = digitLst[step * size + i]
+            tmp2 = target_vector[step * size + i]
             # 1d batch
             # batch = np.concatenate((batch, digitLst[step*size+i]), axis=0)
             # 2d batch
             batch = np.vstack((batch, tmp))
+            target_b = np.vstack((target_b, tmp2))
         # debug
         # print("Batch return", type(batch), type(batch[0]))
-        return batch
+        if size == 1:
+            return [target_b], [batch]
+        else:
+            return target_b, batch
 
+def one_hot_vector(answerKey):
+    '''Performs encoding for class labels of training set'''
+    onehotvectors = []
+    for key in answerKey:
+        empty_vec = np.zeros((1, 10))
+        empty_vec[0][key] = 1
+        onehotvectors.append(empty_vec)
+    return onehotvectors
 
-###############################
-### Main Program ##############
-###############################
-trainFile = "smalltrain.csv"
+def normalize(digitLst):
+    '''Normalize input between 0 and 1'''
+    return digitLst/256
 
-rowcells = 14
-clmcells = 14
+if __name__ == "__main__":
+    ###############################
+    ### Main Program ##############
+    ###############################
+    trainFile = "smalltrain.csv"
 
-batchsize = 3
+    rowcells = 14
+    clmcells = 14
 
-answerKey, digitLst = read_digit_file(trainFile, rowcells, clmcells)
+    batchsize = 3
 
-# debug
-print("answerkey developed")
-print("read trn", type(answerKey), type(digitLst), type(digitLst[0]))
-print(len(answerKey), len(digitLst), digitLst[0].shape)
+    answerKey, digitLst = read_digit_file(trainFile, rowcells, clmcells)
 
-# wait()
+    # debug
+    print("answerkey developed")
+    print("read trn", type(answerKey), type(digitLst), type(digitLst[0]))
+    print(len(answerKey), len(digitLst), digitLst[0].shape)
 
-# for i in range(len(digitLst)):
+    # wait()
 
-# 	print "print cmprsd", i
-# 	print_cmprsd(digitLst[i], rowcells, clmcells)
-# print("************Print Cmprsd**********")
+    # for i in range(len(digitLst)):
 
-# wait()
+    # 	print "print cmprsd", i
+    # 	print_cmprsd(digitLst[i], rowcells, clmcells)
+    # print("************Print Cmprsd**********")
 
-print("************Batch***************")
-for step in range(int(len(digitLst) / batchsize)):
-    batch = batchify(digitLst, batchsize, step)
+    # wait()
 
-# debug
-# print(batch)
-# print(batch.shape)
+    print("************Batch***************")
+    for step in range(int(len(digitLst) / batchsize)):
+        batch = batchify(digitLst, batchsize, step)
+
+    # debug
+    # print(batch)
+    # print(batch.shape)

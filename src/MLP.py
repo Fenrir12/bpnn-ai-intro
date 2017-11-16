@@ -59,6 +59,7 @@ class MLP:
         and outputs the results at the end for one epoch'''
         for depth in range(self.n_layer - 1):
             # Compute activation of first hidden layer
+            inputs = ntf.normalize(inputs)
             if depth == 0:
                 self.A[depth] = self._sigmoid(np.dot(inputs, self.W[depth]))
             # Activation of every other layer
@@ -68,41 +69,45 @@ class MLP:
 
         return self.A[-1]
 
+
     def fit(self, inputs, targets, learning_rate=0.01, n_epochs=200000):
         '''Train the weights of a custom network by computing activations from feedforward
         and then backpropagating the errors after one epoch. Uses simple error as loss function.'''
         ERROR = []
+        batch_size = 10
+        numsteps = int(len(inputs) / batch_size) - 1
 
         for j in range(n_epochs):
+            btchstp = j%numsteps
+            targets_b, batch = ntf.batchify(inputs, targets, batch_size, btchstp)
             # Apply feed forward for epoch
+            self.feedforward(batch)
             for depth in reversed(range(self.n_layer)):
-                for idx, batch in enumerate(inputs):
-                    self.feedforward(batch)
-                    # BACKPROPAGATION
-                    # Squared euclidean distance cost function
-                    # Compute the error and derivative error of output layers' neurons
-                    if depth == self.n_layer - 1:
-                        self.E[depth] = targets[idx] - self.A[depth] # Derivative of the squared euclidean distance
-                        self.D[depth] = np.multiply(self.E[depth], self._dsigmoid(self.A[depth]))
-                    # Compute the error and derivative error of hidden layers' neurons
-                    else:
-                        self.E[depth] = np.dot(self.D[depth + 1], self.W[depth + 1].T)
-                        self.D[depth] = self.E[depth] * self._dsigmoid(self.A[depth])
+                # BACKPROPAGATION
+                # Squared euclidean distance cost function
+                # Compute the error and derivative error of output layers' neurons
+                if depth == self.n_layer - 1:
+                    self.E[depth] = targets_b - self.A[depth] # Derivative of the squared euclidean distance
+                    self.D[depth] = np.multiply(self.E[depth], self._dsigmoid(self.A[depth]))
+                # Compute the error and derivative error of hidden layers' neurons
+                else:
+                    self.E[depth] = np.dot(self.D[depth + 1], self.W[depth + 1].T)
+                    self.D[depth] = self.E[depth] * self._dsigmoid(self.A[depth])
 
-                    # Update weights based on contribution of neuron to error
-                    if depth == 0:
-                        self.W[depth] += np.dot(batch.T, self.D[depth]) * learning_rate
-                    else:
-                        self.W[depth] += np.dot(self.A[depth - 1].T, self.D[depth]) * learning_rate
+                # Update weights based on contribution of neuron to error
+                if depth == 0:
+                    self.W[depth] += np.dot(batch.T, self.D[depth]) * learning_rate
+                else:
+                    self.W[depth] += np.dot(self.A[depth - 1].T, self.D[depth]) * learning_rate
 
-                    if (j % 1000) == 0:
-                        print("Error:" + str(np.mean(np.abs(self.E[self.n_layer - 1]))))
-                        ERROR.append(np.mean(np.abs(self.E[-1])))
+            if (j % 1000) == 0:
+                print("Error:" + str(np.mean(np.abs(self.E[self.n_layer - 1]))))
+                ERROR.append(np.mean(np.abs(self.E[-1])))
 
-                        plt.xlabel('Epochs (n)')
-                        plt.ylabel('Cost function')
-                        plt.plot(range(0, len(ERROR)), ERROR)
-                        plt.pause(0.000001)
+                plt.xlabel('Epochs (n)')
+                plt.ylabel('Cost function')
+                plt.plot(range(0, len(ERROR)), ERROR)
+                plt.pause(0.000001)
         plt.show()
 
     def predict(self, i):
@@ -111,7 +116,8 @@ class MLP:
 
 
 if __name__ == "__main__":
-    mlp = MLP(2, 3, 4, 1)
+
+    mlp = MLP(49, 20, 10, 3)
     # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
@@ -121,9 +127,6 @@ if __name__ == "__main__":
     #                     [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
     #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
 
-    answer_key, dgtLst = ntf.read_digit_file('data/smalltrain.csv', 2, 2)
-    mlp.fit(inputs, targets, learning_rate=0.1)
-    print(str(mlp.predict([0, 0])))
-    print(str(mlp.predict([0, 1])))
-    print(str(mlp.predict([1, 0])))
-    print(str(mlp.predict([1, 1])))
+    answer_key, dgtLst = ntf.read_digit_file('data/smalltrain.csv', 7, 7)
+    targets = ntf.one_hot_vector(answer_key)
+    mlp.fit(dgtLst, targets, learning_rate=0.01, n_epochs=10000000)
