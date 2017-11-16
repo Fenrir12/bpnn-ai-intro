@@ -31,15 +31,15 @@ class MLP:
         if self.n_layer < 1:
             raise ValueError('n_layer should be greater or equal to 2')
         if self.n_layer == 2:
-            self.W[0] = np.random.random((self.n_input, self.n_output))
+            self.W[0] = np.random.normal(scale=0.1, size=(self.n_input, self.n_output))
             self.B[0] = np.zeros((1, self.n_output))
         else:
-            self.W[0] = np.random.random((self.n_input, self.n_hidden))
+            self.W[0] = np.random.normal(scale=0.1, size=(self.n_input, self.n_hidden))
             self.B[0] = np.zeros((1, self.n_hidden))
-            self.W[self.n_layer - 1] = np.random.random((self.n_hidden, self.n_output))
+            self.W[self.n_layer - 1] = np.random.normal(scale=0.1, size=(self.n_hidden, self.n_output))
             self.B[self.n_layer - 1] = np.zeros((1, self.n_hidden))
             for depth in range(1, self.n_layer - 1):
-                self.W[depth] = np.random.random((self.n_hidden, self.n_hidden))
+                self.W[depth] = np.random.normal(scale=0.1, size=(self.n_hidden, self.n_hidden))
                 self.B[depth] = np.zeros((1, self.n_hidden))
 
     def _sigmoid(self, x):
@@ -52,7 +52,7 @@ class MLP:
 
     def _softmax(self, x):
         """Compute softmax values for each sets of scores in x."""
-        return np.exp(x) / np.sum(np.exp(x), axis=0)
+        return np.exp(x) / np.sum(np.exp(x), axis=(0))
 
     def feedforward(self, inputs):
         '''Fills the activation matrix of the neurons
@@ -65,7 +65,7 @@ class MLP:
             # Activation of every other layer
             else:
                 self.A[depth] = self._sigmoid(np.dot(self.A[depth - 1], self.W[depth]))
-        self.A[-1] = self._sigmoid(np.dot(self.A[-2], self.W[-1]))
+        self.A[-1] = self._softmax(self._sigmoid(np.dot(self.A[-2], self.W[-1])))
 
         return self.A[-1]
 
@@ -74,7 +74,7 @@ class MLP:
         '''Train the weights of a custom network by computing activations from feedforward
         and then backpropagating the errors after one epoch. Uses simple error as loss function.'''
         ERROR = []
-        batch_size = 10
+        batch_size = 2
         numsteps = int(len(inputs) / batch_size) - 1
 
         for j in range(n_epochs):
@@ -87,7 +87,7 @@ class MLP:
                 # Squared euclidean distance cost function
                 # Compute the error and derivative error of output layers' neurons
                 if depth == self.n_layer - 1:
-                    self.E[depth] = targets_b - self.A[depth] # Derivative of the squared euclidean distance
+                    self.E[depth] = (targets_b - self.A[depth]) # Derivative of the squared euclidean distance
                     self.D[depth] = np.multiply(self.E[depth], self._dsigmoid(self.A[depth]))
                 # Compute the error and derivative error of hidden layers' neurons
                 else:
@@ -117,7 +117,7 @@ class MLP:
 
 if __name__ == "__main__":
 
-    mlp = MLP(49, 20, 10, 3)
+    mlp = MLP(100, 30, 10, 3)
     # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
@@ -127,6 +127,6 @@ if __name__ == "__main__":
     #                     [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
     #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
 
-    answer_key, dgtLst = ntf.read_digit_file('data/smalltrain.csv', 7, 7)
+    answer_key, dgtLst = ntf.read_digit_file('data/smalltrain.csv', 10, 10)
     targets = ntf.one_hot_vector(answer_key)
-    mlp.fit(dgtLst, targets, learning_rate=0.01, n_epochs=10000000)
+    mlp.fit(dgtLst, targets, learning_rate=0.1, n_epochs=10000000)
