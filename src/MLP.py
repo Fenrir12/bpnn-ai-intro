@@ -71,7 +71,7 @@ class MLP:
         '''Train the weights of a custom network by computing activations from feedforward
         and then backpropagating the errors after one epoch. Uses simple error as loss function.'''
         ERROR = []
-        batch_size = 10
+        batch_size = 200
         numsteps = int(len(inputs) / batch_size) - 1
 
         for j in range(n_epochs):

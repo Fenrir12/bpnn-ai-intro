@@ -82,7 +82,7 @@ def read_digit_file(digFile, rowcells, clmcells):
     # Delete the label from panda dataframe,
     trainDF.drop('label', axis=1)
 
-    # Pop first column of labels
+    # Transfer to array and pop first column containing labels)
     digitLst = np.array(trainDF.values.tolist())[:,1:]
 
     if rowcells*clmcells != 784:
