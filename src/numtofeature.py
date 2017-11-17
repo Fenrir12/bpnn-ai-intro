@@ -98,7 +98,7 @@ def read_train(digFile, rowcells, clmcells):
     answerKey = trainDF['label'].tolist()
 
     # Delete the label from panda dataframe,
-    trainDF.drop('label', axis=1)
+    trainDF = trainDF.drop('label', axis=1)
 
     digitLst = trainDF.values.tolist()
 
@@ -150,7 +150,7 @@ def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
     answerKey = trainDf['label'].tolist()
 
     # Delete the label from panda dataframe,
-    trainDf.drop('label', axis=1)
+    trainDf = trainDf.drop('label', axis=1)
 
     digitLst = trainDf.values.tolist()
 
@@ -213,7 +213,10 @@ def batchify(digitLst, target_vector, size, step):
 
 def normalize(digitLst):
     '''Normalize input between 0 and 1'''
-    return digitLst/256
+    for i in range(len(digitLst)):
+        digitLst[i]=digitLst[i]/256
+        # print(digitLst[i])
+    return digitLst
 
 
 if __name__ == "__main__":
