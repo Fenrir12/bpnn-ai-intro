@@ -12,13 +12,13 @@ import pandas as pd
 
 
 def wait():
-    programPause = raw_input("Press the <ENTER> key to continue...")
-    #programPause = input("Press the <ENTER> key to continue...")
+    #programPause = raw_input("Press the <ENTER> key to continue...")
+    programPause = input("Press the <ENTER> key to continue...")
 
 
 #########   Explanation  #######################
 # reduces size of hand-drawn image vector
-#########   Input   cell #######################
+#########   Input  #######################
 # numimage: 1d numpy vector of grayscale numbers of handrawn digit
 # rowcells: number of cells in y direction to compress down to
 # clmcells: number of cells in x direction to compress down to
@@ -79,6 +79,13 @@ def digtoHotVec(digit):
     empty_vec[0][digit] = 1
     return empty_vec
 
+def normalize(digitLst):
+    '''Normalize input between 0 and 1'''
+    for i in range(len(digitLst)):
+        digitLst[i]=digitLst[i]/256
+        # print(digitLst[i])
+    return digitLst
+
 #########   Explanation  #######################
 # reads file containing many hand drawn image files
 #########   Input    #######################
@@ -98,7 +105,7 @@ def read_train(digFile, rowcells, clmcells):
     answerKey = trainDF['label'].tolist()
 
     # Delete the label from panda dataframe,
-    trainDF.drop('label', axis=1)
+    trainDF = trainDF.drop('label', axis=1)
 
     digitLst = trainDF.values.tolist()
 
@@ -106,6 +113,7 @@ def read_train(digFile, rowcells, clmcells):
         answerKey[i] = digtoHotVec(answerKey[i])
         digitLst[i] = compress(digitLst[i], rowcells, clmcells)
 
+    digitLst = normalize(digitLst)
     return answerKey, digitLst
 
 #########   Explanation  #######################
@@ -120,6 +128,7 @@ def read_test(testFile, rowcells, clmcells):
     for i in range(len(digitLst)):
         digitLst[i] = compress(digitLst[i], rowcells, clmcells)
 
+    digitLst = normalize(digitLst)
     return digitLst
 
 #########   Explanation  #######################
@@ -127,6 +136,7 @@ def read_test(testFile, rowcells, clmcells):
 # size of testing set, gives answer key to testing to see
 # if learning is effective
 def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
+    print("1make it in")
     answerKey=[]
     digitLst=[]
     
@@ -136,21 +146,24 @@ def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
     tstKey = []  # this will hold the actual value of the digit entry
     tstLst = []  # will hold 1D numpy vecs of the data
     
+    print("2make it in")
     trainDf = pd.read_csv(digFile, header=0, index_col=False)
+    print("3make it in")
     
-    '''
+    
     #This function takes a long time to run so decomment these lines if you
     #will be running the same training and testing set over and over
+    '''
     droprows = range(numTrn+numTst+1, len(trainDf))
     smallDf= trainDf.drop(trainDf.index[droprows])
-    smallDf.to_csv("1000trn100tst.csv")
+    smallDf.to_csv("5000trn500tst.csv")
     wait()
     '''
     
     answerKey = trainDf['label'].tolist()
 
     # Delete the label from panda dataframe,
-    trainDf.drop('label', axis=1)
+    trainDf = trainDf.drop('label', axis=1)
 
     digitLst = trainDf.values.tolist()
 
@@ -162,12 +175,16 @@ def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
         print("Error: numTest + numTrain must be less than number of digits in digit File")
         for i in range(numTrn, len(answerKey)):
             tstLst.append(compress(digitLst[i], rowcells, clmcells))
-            tstKey.append(digtoHotVec(answerKey[i]))          
+            tstKey.append(digtoHotVec(answerKey[i]))           
     else:
         for i in range(numTrn, numTrn+numTst):
             tstLst.append(compress(digitLst[i], rowcells, clmcells))
             tstKey.append(digtoHotVec(answerKey[i]))          
 
+    
+    trnLst = normalize(trnLst)
+    tstLst = normalize(tstLst)
+    print("10make it in")
     return trnLst, trnKey, tstLst, tstKey
 
 #########   Explanation  #######################
@@ -210,23 +227,17 @@ def batchify(digitLst, target_vector, size, step):
             return target_b, batch
 
 
-
-def normalize(digitLst):
-    '''Normalize input between 0 and 1'''
-    return digitLst/256
-
-
 if __name__ == "__main__":
     ###############################
     ### Main Program ##############
     ###############################
-    trainFile = "Data/1000trn100tst.csv"
+    trainFile = "Data/mnsitTrain.csv"
 
     rowcells = 4
     clmcells = 4
     
-    numTrn = 1000
-    numTst = 100
+    numTrn = 5000
+    numTst = 500
 
     batchsize = 3
 
@@ -246,12 +257,12 @@ if __name__ == "__main__":
 
     # wait()
     print("************Read Train Partial*********")
-    trnLst, trnKey, tstLst, tstKey = read_trn_partial(trainFile, rowcells, clmcells, numTrn, numTst)
+    trnLst, trnKey, tstLst, tstKey = \
+    read_trn_partial(trainFile, rowcells, clmcells, numTrn, numTst)
     
     print("************Batch***************")
     for step in range(int(len(digitLst) / batchsize)):
         answer_b, batch = batchify(digitLst, answerKey, batchsize, step)
 
     # debug
-    print(batch)
     print(batch.shape)
