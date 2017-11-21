@@ -26,6 +26,7 @@ class MLP:
         self.n_hidden = n_hidden
         self.n_output = n_output
         self.n_layer = n_layer + 1
+        self.cost = 0
         self.W = [0.0] * self.n_layer # Weight of neurons in each layers
         self.A = [0.0] * self.n_layer # Output of neurons in each layers
         self.dC = [0.0] * self.n_layer # Derivative of cost function
@@ -117,6 +118,12 @@ class MLP:
     def _softmax(self, batch_o):
         return np.array([np.exp(x) / np.exp(x).sum() for x in batch_o])
 
+    def cost_sqrd_euc(self, targets, outputs, derivative=0):
+        if derivative == 1:
+            return -(targets - outputs)
+        else:
+            return 0.5 * (targets - outputs)**2
+
     def feedforward(self, inputs):
         '''Fills the activation matrix of the neurons
         and outputs the results at the end for one epoch'''
@@ -128,7 +135,7 @@ class MLP:
             else:
                 self.A[depth] = self._sigmoid(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
         
-        self.A[depth] = self._sigmoid(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
+        self.A[depth] = self._softmax(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
         #print("activation", self.A[depth])
 
         return self.A[depth]
@@ -148,7 +155,7 @@ class MLP:
                 self.A[depth] = self._softplus(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
                 
         #activation of last layer??????????
-        self.A[depth] = self._sigmoid(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
+        self.A[depth] = self._softmax(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
         #print("activation", self.A[depth])
 
         return self.A[depth]
@@ -207,7 +214,8 @@ class MLP:
                     # print("shape check", targets_b.shape, self.A[depth].shape)
                     # print(targets_b)
                     # print(self.outActAdjst(self.A[depth]))
-                    self.dC[depth] = targets_b - self.A[depth]  # Derivative of the squared euclidean distance
+                    self.cost = self.cost_sqrd_euc(targets_b, self.A[depth])
+                    self.dC[depth] = self.cost_sqrd_euc(targets_b, self.A[depth], derivative=1) # Derivative of the squared euclidean distance
                     # print("output layer error", self.E[depth])
                     self.dW[depth] = np.multiply(self.dC[depth], self._dsigmoid(self.A[depth]))
                 # Compute the error and derivative error of hidden layers' neurons
@@ -217,13 +225,13 @@ class MLP:
 
                 # Update weights based on contribution of neuron to error
                 if depth == 0:
-                    self.W[depth] += np.dot(batch.T, self.dW[depth]) * learning_rate
+                    self.W[depth] -= np.dot(batch.T, self.dW[depth]) * learning_rate
                 else:
-                    self.W[depth] += np.dot(self.A[depth - 1].T, self.dW[depth]) * learning_rate
-                self.B[depth] += np.mean(self.dW[depth], axis=0) * learning_rate
+                    self.W[depth] -= np.dot(self.A[depth - 1].T, self.dW[depth]) * learning_rate
+                self.B[depth] -= np.mean(self.dW[depth], axis=0) * learning_rate
             if (j % 10) == 0:
                 print("Error:" + str(np.mean(np.abs(self.dC[self.n_layer - 1]))))
-                ERROR.append(np.mean(np.abs(self.dC[-1])))
+                ERROR.append(np.mean(np.abs(self.cost)))
                 trnErr.append(self.testAccuracy(inputs, targets))
                 tstErr.append(self.testAccuracy(tstData, tstKey))
 
@@ -275,7 +283,8 @@ class MLP:
                 # Compute the error and derivative error of output layers' neurons
                 if depth == self.n_layer - 1:
                     #print("shape check", targets_b.shape, self.A[depth].shape)
-                    self.dC[depth] = targets_b - self.A[depth]  # Derivative of the squared euclidean distance
+                    self.cost = self.cost_sqrd_euc(targets_b, self.A[depth])
+                    self.dC[depth] = self.cost_sqrd_euc(targets_b, self.A[depth], derivative=1)  # Derivative of the squared euclidean distance
                     self.dW[depth] = np.multiply(self.dC[depth], self._dsigmoid(self.A[depth])) # Haddamard product
                 # Compute the error and derivative error of hidden layers' neurons
                 else:
@@ -285,15 +294,15 @@ class MLP:
                 # Update weights based on contribution of neuron to error
                 # if input layer
                 if depth == 0:
-                    self.W[depth] += np.dot(batch.T, self.dW[depth]) * learning_rate
+                    self.W[depth] -= np.dot(batch.T, self.dW[depth]) * learning_rate
                 else:
-                    self.W[depth] += np.dot(self.A[depth - 1].T, self.dW[depth]) * learning_rate
-                self.B[depth] += np.mean(self.dW[depth], axis=0) * learning_rate
+                    self.W[depth] -= np.dot(self.A[depth - 1].T, self.dW[depth]) * learning_rate
+                self.B[depth] -= np.mean(self.dW[depth], axis=0) * learning_rate
             if (j % 5) == 0:
                 '''
                 print("Error:" + str(np.mean(np.abs(self.E[self.n_layer - 1]))))
                 '''
-                ERROR.append(np.mean(np.abs(self.dC[-1])))
+                ERROR.append(np.sum(self.cost))
                 trnErr.append(self.testAccuracy(inputs, targets))
                 tstErr.append(self.testAccuracy(tstData, tstKey))
                 
@@ -346,11 +355,11 @@ if __name__ == "__main__":
     #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
     print ('==========Extracting train set')
     trnLst, trnKey, tstLst, tstKey = \
-    ntf.read_trn_partial('data/5000trn500tst.csv', 28, 28, 5000, 500)
+    ntf.read_trn_partial('data/1000trn100tst.csv', 28, 28, 1000, 100)
 
     #print(trnLst[0].shape)
     print ('==========Training...')
-    mlp.fitSp(trnLst, trnKey, tstLst, tstKey, learning_rate=0.01, n_epochs=20000)
+    mlp.fitSg(trnLst, trnKey, tstLst, tstKey, learning_rate=0.1, n_epochs=20000)
     print ('==========Training done')
     
     #mlp.testAccuracy(trnLst, trnKey)

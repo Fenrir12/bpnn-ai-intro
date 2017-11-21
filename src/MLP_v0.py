@@ -63,7 +63,7 @@ class MLP:
             # Activation of every other layer
             else:
                 self.A[depth] = self._sigmoid(np.dot(self.A[depth - 1], self.W[depth]))
-        self.A[depth] = self._softmax(np.dot(self.A[-2], self.W[-1]))
+        self.A[depth] = self._sigmoid(np.dot(self.A[-2], self.W[-1]))
 
         return self.A[depth]
 
@@ -71,31 +71,28 @@ class MLP:
         '''Train the weights of a custom network by computing activations from feedforward
         and then backpropagating the errors after one epoch. Uses simple error as loss function.'''
         ERROR = []
-        batch_size = 1
-        numsteps = int(len(inputs) / batch_size) - 1
 
         for j in range(n_epochs):
-            btchstp = j % numsteps
-            targets_b, batch = ntf.batchify(inputs, targets, batch_size, btchstp)
             # Apply feed forward for epoch
-            self.feedforward(batch)
-            for depth in reversed(range(self.n_layer)):
-                # BACKPROPAGATION
-                # Squared euclidean distance cost function
-                # Compute the error and derivative error of output layers' neurons
-                if depth == self.n_layer - 1:
-                    self.E[depth] = targets_b - self.A[depth]  # Derivative of the squared euclidean distance
-                    self.D[depth] = np.multiply(self.E[depth], self._dsigmoid(self.A[depth]))
-                # Compute the error and derivative error of hidden layers' neurons
-                else:
-                    self.E[depth] = np.dot(self.D[depth + 1], self.W[depth + 1].T)
-                    self.D[depth] = self.E[depth] * self._dsigmoid(self.A[depth])
+            for i, t in zip(inputs, targets):
+                self.feedforward(i)
+                for depth in reversed(range(self.n_layer)):
+                    # BACKPROPAGATION
+                    # Squared euclidean distance cost function
+                    # Compute the error and derivative error of output layers' neurons
+                    if depth == self.n_layer - 1:
+                        self.E[depth] = t - self.A[depth]  # Derivative of the squared euclidean distance
+                        self.D[depth] = np.multiply(self.E[depth], self._dsigmoid(self.A[depth]))
+                    # Compute the error and derivative error of hidden layers' neurons
+                    else:
+                        self.E[depth] = np.dot(self.D[depth + 1], self.W[depth + 1].T)
+                        self.D[depth] = self.E[depth] * self._dsigmoid(self.A[depth])
 
-                # Update weights based on contribution of neuron to error
-                if depth == 0:
-                    self.W[depth] += np.dot(batch.T, self.D[depth]) * learning_rate
-                else:
-                    self.W[depth] += np.dot(self.A[depth - 1].T, self.D[depth]) * learning_rate
+                    # Update weights based on contribution of neuron to error
+                    if depth == 0:
+                        self.W[depth] += np.dot(i.T, self.D[depth]) * learning_rate
+                    else:
+                        self.W[depth] += np.dot(self.A[depth - 1].T, self.D[depth]) * learning_rate
 
             if (j % 1000) == 0:
                 print("Error:" + str(np.mean(np.abs(self.E[self.n_layer - 1]))))
@@ -111,22 +108,31 @@ class MLP:
         '''Returns the output of the network given an input matching input neurons'''
         return self.feedforward(i)
 
+    def xy_coord(self, thetas):
+        x = 5*np.cos(thetas[0]) + 3*np.cos(thetas[0]+thetas[1])
+        y = 5 * np.sin(thetas[0]) + 3 * np.sin(thetas[0] + thetas[1])
+        return np.array([x, y])
 
 if __name__ == "__main__":
-    mlp = MLP(2, 4, 4, 1)
+    mlp = MLP(2, 10, 2, 1)
+    # In-class exercise inverse kinematics
+    targets = np.array([[0.12, 0.54], [3.1416, 3.1416], [3.1416, 4.57], [4.57, 0.21], [3.89, 5.67],
+                       [0.89, 0.54], [3.1416, 2.78], [1.42, 3.1416], [0.76, 0.76], [3.21, 0.12]])
+    inputs = np.array([mlp.xy_coord([0.12, 0.54]), mlp.xy_coord([3.1416, 3.1416]), mlp.xy_coord([3.1416, 4.57]), mlp.xy_coord([4.57, 0.21]), mlp.xy_coord([3.89, 5.67]),
+                       mlp.xy_coord([0.89, 0.54]), mlp.xy_coord([3.1416, 2.78]), mlp.xy_coord([1.42, 3.1416]), mlp.xy_coord([0.76, 0.76]), mlp.xy_coord([3.21, 0.12])])
     # Test XOR, AND, OR and NOR inputs and targets
-    inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
-                       [[0, 0], [0, 1], [1, 0], [1, 1]],
-                       [[0, 0], [0, 1], [1, 0], [1, 1]],
-                       [[0, 0], [0, 1], [1, 0], [1, 1]]])
-    targets = np.array([[[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
-                        [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0]],
-                        [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
-                        [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
+    # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
+    #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
+    #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
+    #                    [[0, 0], [0, 1], [1, 0], [1, 1]]])
+    # targets = np.array([[[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
+    #                     [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0]],
+    #                     [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
+    #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
     print '==========Extracting train set'
     # answer_key, dgtLst = ntf.read_digit_file('../../train.csv', 28, 28)
     # targets = ntf.one_hot_vector(answer_key)
     print '==========Training...'
-    mlp.fit(inputs, targets, learning_rate=0.01, n_epochs=10000000)
+    mlp.fit(inputs, targets, learning_rate=1.0, n_epochs=10000000)
     print '==========Training done'
 
