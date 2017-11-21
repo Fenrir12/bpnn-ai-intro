@@ -34,7 +34,7 @@ class MLP:
 
         # Initialize weights and biases of layers according to depth of network
         if self.n_layer < 1:
-            raise ValueError('n_layer should be greater or equal to 2')
+            raise ValueError('n_layer should be greater or equal to 1')
         if self.n_layer == 1:
             self.W[0] = np.random.normal(scale=0.1, size=(self.n_input, self.n_output))
             self.B[0] = np.zeros((1, self.n_output))
@@ -102,7 +102,7 @@ class MLP:
         return splus(x)
     
     #jmw
-    #matrix calc used in backpropopigation
+    #matrix calc used in backpropagation
     def _dsoftplus(self, x):
         dsplus = np.vectorize(self.dsoftplusElement, otypes=[np.float])
         return np.exp(x) / (1 + np.exp(x))
@@ -288,7 +288,7 @@ class MLP:
                 tstErr.append(self.testAccuracy(tstData, tstKey))
                 
                 #print("Trn Error,", trnErr,"Tst Error,", tstErr)
-            if((j+1)%100==0):
+            if((j+1)%10==0):
                 printlst = []
                 printlst.append(ERROR)
                 printlst.append(trnErr)
@@ -300,12 +300,12 @@ class MLP:
                 printDF.to_csv(csvname)
                 
 
-                # plt.xlabel('Epochs (n)')
-                # plt.ylabel('Cost function')
-                # plt.plot(range(0, len(ERROR)), ERROR)
-                # plt.pause(0.000001)
+                plt.xlabel('Epochs (n)')
+                plt.ylabel('Cost function')
+                plt.plot(range(0, len(ERROR)), ERROR)
+                plt.pause(0.000001)
 
-        #plt.show()
+        plt.show()
 
     #jmw
     ###candidate for deletion, all it does is call feed forward

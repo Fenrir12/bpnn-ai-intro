@@ -71,7 +71,7 @@ class MLP:
         '''Train the weights of a custom network by computing activations from feedforward
         and then backpropagating the errors after one epoch. Uses simple error as loss function.'''
         ERROR = []
-        batch_size = 200
+        batch_size = 1
         numsteps = int(len(inputs) / batch_size) - 1
 
         for j in range(n_epochs):
@@ -113,20 +113,20 @@ class MLP:
 
 
 if __name__ == "__main__":
-    mlp = MLP(784, 784, 10, 1)
+    mlp = MLP(2, 4, 4, 1)
     # Test XOR, AND, OR and NOR inputs and targets
-    # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
-    #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
-    #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
-    #                    [[0, 0], [0, 1], [1, 0], [1, 1]]])
-    # targets = np.array([[[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
-    #                     [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0]],
-    #                     [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
-    #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
+    inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
+                       [[0, 0], [0, 1], [1, 0], [1, 1]],
+                       [[0, 0], [0, 1], [1, 0], [1, 1]],
+                       [[0, 0], [0, 1], [1, 0], [1, 1]]])
+    targets = np.array([[[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
+                        [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0]],
+                        [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
+                        [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
     print '==========Extracting train set'
-    answer_key, dgtLst = ntf.read_digit_file('../../train.csv', 28, 28)
-    targets = ntf.one_hot_vector(answer_key)
+    # answer_key, dgtLst = ntf.read_digit_file('../../train.csv', 28, 28)
+    # targets = ntf.one_hot_vector(answer_key)
     print '==========Training...'
-    mlp.fit(dgtLst, targets, learning_rate=0.01, n_epochs=10000000)
+    mlp.fit(inputs, targets, learning_rate=0.01, n_epochs=10000000)
     print '==========Training done'
 
