@@ -12,7 +12,7 @@ def wait():
 
 class MLP:
     def __init__(self, lyrNodes, lrnRate=0.1, regParam=1, batch_size=10,
-                 hiddenActv='sigmoid', outputActv='softmax', costFnc='sqrdEuc', n_epochs=200):
+                 hiddenActv='softmax', outputActv='sigmoid', costFnc='sqrdEuc', n_epochs=200):
         '''Initializes weight matrices with respect to specified number of neurons
         for input, hidden and output layer. Also specifies the number of hidden layer
         of the network. Provides accessibility to the insides of the network with
@@ -228,7 +228,12 @@ class MLP:
         print("num inputs", len(inputs))
         print("numsteps", numsteps)
         print(self.n_epochs)
-
+        
+        bestAcc=0
+        bestA = 0
+        bestW = 0
+        bestB = 0
+        
         for j in range(self.n_epochs):
             btchstp = j % numsteps
             targets_b, batch = ntf.batchify(inputs, targets, batch_size, btchstp)
@@ -240,7 +245,13 @@ class MLP:
             ERROR.append(self.cost)
 
             trnErr.append(self.testAccuracy(inputs, targets))
-            tstErr.append(self.testAccuracy(tstData, tstKey))
+            testAcc = self.testAccuracy(tstData, tstKey)
+            tstErr.append(testAcc)
+            
+            if(testAcc>bestAcc):
+                bestA = self.A
+                bestW = self.W
+                bestB = self.B
 
             # print("Trn Error,", trnErr,"Tst Error,", tstErr)
             if (j % 5 == 0):
@@ -266,9 +277,12 @@ class MLP:
                 plt.plot(range(0, len(trnErr)), trnErr, 'bo')
                 plt.plot(range(0, len(tstErr)), tstErr, 'r--')
                 plt.pause(0.000001)
-
+        
+        
         plt.show()
-
+        self.A=bestA
+        self.W=bestW
+        self.B=bestB
 
 if __name__ == "__main__":
     # n_input, n_hidden, n_output, n_layer (optional specify learning rate and reg param)
