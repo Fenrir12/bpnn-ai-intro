@@ -284,7 +284,7 @@ if __name__ == "__main__":
     mlp.n_epochs = 1000
     mlp.alpha = 0.01
     mlp.outputActv = 'softmax'
-    mlp.costFnc = 'sqrdEuc'
+    mlp.costFnc = 'xentropy'
     # Test XOR, AND, OR and NOR inputs and targets
     # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
