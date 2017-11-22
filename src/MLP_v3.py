@@ -9,7 +9,7 @@ def wait():
     programPause = input("Press the <ENTER> key to continue...")
 
 class MLP:
-    def __init__(self, n_input, n_hidden, n_output, n_layer, lrnRate, regParam):
+    def __init__(self, n_input, n_hidden, n_output, n_layer, lrnRate=0.1, regParam=1, batch_size=50):
         '''Initializes weight matrices with respect to specified number of neurons
         for input, hidden and output layer. Also specifies the number of hidden layer
         of the network. Provides accessibility to the insides of the network with
@@ -26,6 +26,7 @@ class MLP:
         self.n_hidden = n_hidden
         self.n_output = n_output
         self.n_layer = n_layer + 1
+        self.batch_size = batch_size
         self.alpha = lrnRate         #learning rate paarameter
         self.lmda = regParam         #regularization parameter
         self.cost = 0
@@ -186,7 +187,7 @@ class MLP:
         ERROR = []
         trnErr = []
         tstErr = []
-        batch_size = 100
+        batch_size =  self.batch_size
         numsteps = int(len(inputs) / batch_size) - 1
 
         print("Epoch Number, ",n_epochs)
@@ -241,7 +242,7 @@ class MLP:
                 plt.plot(range(0, len(tstErr)), tstErr, 'b')
                 plt.pause(0.000001)
 
-            if((j+1)%100==0):
+            if((j+1)%10==0):
                 printlst = []
                 printlst.append(ERROR)
                 printlst.append(trnErr)
@@ -260,7 +261,7 @@ class MLP:
         ERROR = []
         trnErr = []
         tstErr = []
-        batch_size = 10
+        batch_size =  self.batch_size
         numsteps = int(len(inputs) / batch_size) - 1
         print("num inputs", len(inputs))
         print("numsteps", numsteps)
@@ -346,8 +347,8 @@ class MLP:
 
     
 if __name__ == "__main__":
-    #n_input, n_hidden, n_output, n_layer, lrnRate, regParam
-    mlp = MLP(784, 100, 10, 1, 0.1, 1)
+    #n_input, n_hidden, n_output, n_layer (optional specify learning rate and reg param)
+    mlp = MLP(784, 100, 10, 1)
     # Test XOR, AND, OR and NOR inputs and targets
     # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
     #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
