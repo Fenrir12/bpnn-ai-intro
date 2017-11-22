@@ -1,12 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-#import src.numtofeature as ntf
+# import src.numtofeature as ntf
 import numtofeature as ntf
 import pandas as pd
 
+
 def wait():
-    #programPause = raw_input("Press the <ENTER> key to continue...")
+    # programPause = raw_input("Press the <ENTER> key to continue...")
     programPause = input("Press the <ENTER> key to continue...")
+
 
 class MLP:
     def __init__(self, n_input, n_hidden, n_output, n_layer):
@@ -27,11 +29,11 @@ class MLP:
         self.n_output = n_output
         self.n_layer = n_layer + 1
         self.cost = 0
-        self.W = [0.0] * self.n_layer # Weight of neurons in each layers
-        self.A = [0.0] * self.n_layer # Output of neurons in each layers
-        self.dC = [0.0] * self.n_layer # Derivative of cost function
-        self.dW = [0.0] * self.n_layer # Rate of change of cost function for each neurons
-        self.B = [0.0] * self.n_layer # Bias term of each neuron
+        self.W = [0.0] * self.n_layer  # Weight of neurons in each layers
+        self.A = [0.0] * self.n_layer  # Output of neurons in each layers
+        self.dC = [0.0] * self.n_layer  # Derivative of cost function
+        self.dW = [0.0] * self.n_layer  # Rate of change of cost function for each neurons
+        self.B = [0.0] * self.n_layer  # Bias term of each neuron
 
         # Initialize weights and biases of layers according to depth of network
         if self.n_layer < 1:
@@ -47,7 +49,8 @@ class MLP:
             for depth in range(1, self.n_layer - 1):
                 self.W[depth] = np.random.normal(scale=0.1, size=(self.n_hidden, self.n_hidden))
                 self.B[depth] = np.random.normal(scale=0.1, size=(1, self.n_hidden))
-    #jmw
+
+    # jmw
     #########   Explanation  #######################
     #   This function will test a neural network against test data
     #########   Input  #######################
@@ -57,56 +60,55 @@ class MLP:
     #########   Output  #######################
     # Will print out overall accuracy rate, accuracy rate of each digit
     def testAccuracy(self, tstLst, tstKey):
-        i=0
-        inaccurate=0
-        
+        i = 0
+        inaccurate = 0
+
         for i in range(len(tstLst)):
             predict = self.feedforward(tstLst[i])
             maxpos = np.argmax(predict)
             pretty = np.zeros_like(predict)
-            pretty[0][maxpos]= 1
-            
-            if(maxpos != np.argmax(tstKey[i])):
+            pretty[0][maxpos] = 1
+
+            if (maxpos != np.argmax(tstKey[i])):
                 '''
                 print(tstKey[i])
                 print(pretty)
                 print(np.argmax(tstKey[i])," ", maxpos)
                 '''
                 inaccurate += 1.0
-        accuracy = 100 - 100 * float(inaccurate/len(tstLst))
+        accuracy = 100 - 100 * float(inaccurate / len(tstLst))
         return accuracy
-    
-    #jmw
-    #elementwise version of ReLU equation
+
+    # jmw
+    # elementwise version of ReLU equation
     def softplusElement(self, x):
-        #approximate of ReLU that you can take a derivative of
-        #https://www.quora.com/What-is-special-about-rectifier-neural-units-used-in-NN-learning
+        # approximate of ReLU that you can take a derivative of
+        # https://www.quora.com/What-is-special-about-rectifier-neural-units-used-in-NN-learning
         # print(x)
         tmp = 1 + np.exp(x)
         y = np.log(tmp)
         return y
 
-    #jmw
+    # jmw
     # elementwise version of derivative of ReLU equation
     def dsoftplusElement(self, x):
         # print("dsplus elm", x)
-        y = 1/(1+np.exp(-x))
+        y = 1 / (1 + np.exp(-x))
         return y
 
-    #jmw
-    #matix calc for activation function
+    # jmw
+    # matix calc for activation function
     def _softplus(self, x):
         # approximate of ReLU that you can take a derivative of
         splus = np.vectorize(self.softplusElement, otypes=[np.float])
         return splus(x)
-    
-    #jmw
-    #matrix calc used in backpropagation
+
+    # jmw
+    # matrix calc used in backpropagation
     def _dsoftplus(self, x):
         dsplus = np.vectorize(self.dsoftplusElement, otypes=[np.float])
         return np.exp(x) / (1 + np.exp(x))
 
-    
     def _sigmoid(self, x):
         '''Computes sigmoid of a value'''
         return 1 / (1 + np.exp(-x))
@@ -118,11 +120,20 @@ class MLP:
     def _softmax(self, batch_o):
         return np.array([np.exp(x) / np.exp(x).sum() for x in batch_o])
 
-    def cost_sqrd_euc(self, targets, outputs, derivative=0):
-        if derivative == 1:
-            return -(targets - outputs)
-        else:
-            return 0.5 * (targets - outputs)**2
+    def _dsoftmax(self, y):
+        return y * (1.0 - y)
+
+    def costfunc(self, targets, outputs, derivative=0, costfunc='squared_euclidean'):
+        if costfunc == 'squared_euclidean':
+            if derivative == 1:
+                return -(targets - outputs)
+            else:
+                return 0.5 * (targets - outputs) ** 2
+        elif costfunc == 'xentropy':
+            if derivative == 1:
+                return (outputs - targets)
+            else:
+                return targets*np.log(outputs)
 
     def feedforward(self, inputs):
         '''Fills the activation matrix of the neurons
@@ -134,14 +145,14 @@ class MLP:
             # Activation of every other layer
             else:
                 self.A[depth] = self._sigmoid(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
-        
+
         self.A[depth] = self._softmax(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
-        #print("activation", self.A[depth])
+        # print("activation", self.A[depth])
 
         return self.A[depth]
-       
-    #jmw
-    #same as other but softplus activation, except for final layer
+
+    # jmw
+    # same as other but softplus activation, except for final layer
     # this will scale answers back to close to one for error calculation
     def ffpropSplus(self, inputs):
         '''Fills the activation matrix of the neurons
@@ -153,42 +164,42 @@ class MLP:
             # Activation of every other layer
             else:
                 self.A[depth] = self._softplus(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
-                
-        #activation of last layer??????????
+
+        # activation of last layer??????????
         self.A[depth] = self._softmax(np.dot(self.A[depth - 1], self.W[depth]) + self.B[depth])
-        #print("activation", self.A[depth])
+        # print("activation", self.A[depth])
 
         return self.A[depth]
-    
-    #jmw
-    #will take the output activation layer and adjust it to proper binary categorical 
+
+    # jmw
+    # will take the output activation layer and adjust it to proper binary categorical
     def outActAdjst(self, A):
         outputArray = np.zeros_like(A)
-        i=0
+        i = 0
         for row in A:
             maxpos = np.argmax(row)
-            outputArray[i][maxpos]=1
-            i+=1
-        
+            outputArray[i][maxpos] = 1
+            i += 1
+
         return outputArray
-    
-    #jmw
-    #will compare the activation layer, and the the label vector and calc
+
+    # jmw
+    # will compare the activation layer, and the the label vector and calc
     # the error.  First step Error in backprop
     def outLblError(self, act, lbl, depth):
         adjusted = self.outActAdjst(act)
-        #print(act)
-        #print("adjusted",adjusted)
+        # print(act)
+        # print("adjusted",adjusted)
         ErrorArray = np.zeros_like(act)
         for i in range(len(act)):
-            #print(tmp)
-            if(not(np.array_equal(adjusted[i],lbl[i]))):
+            # print(tmp)
+            if (not (np.array_equal(adjusted[i], lbl[i]))):
                 ErrorArray[i] = lbl[i] - self.A[depth][i]
-                
+
         return ErrorArray
 
-    #jmw
-    #same as your fit, but changed to use soft plus scheme, sigmoid on output layer
+    # jmw
+    # same as your fit, but changed to use soft plus scheme, sigmoid on output layer
     # soft plus on all of the rest
     def fitSp(self, inputs, targets, tstData, tstKey, learning_rate=0.01, n_epochs=200000):
         '''Train the weights of a custom network by computing activations from feedforward
@@ -214,8 +225,9 @@ class MLP:
                     # print("shape check", targets_b.shape, self.A[depth].shape)
                     # print(targets_b)
                     # print(self.outActAdjst(self.A[depth]))
-                    self.cost = self.cost_sqrd_euc(targets_b, self.A[depth])
-                    self.dC[depth] = self.cost_sqrd_euc(targets_b, self.A[depth], derivative=1) # Derivative of the squared euclidean distance
+                    self.cost = self.costfunc(targets_b, self.A[depth])
+                    self.dC[depth] = self.costfunc(targets_b, self.A[depth],
+                                               derivative=1)  # Derivative of the squared euclidean distance
                     # print("output layer error", self.E[depth])
                     self.dW[depth] = np.multiply(self.dC[depth], self._dsigmoid(self.A[depth]))
                 # Compute the error and derivative error of hidden layers' neurons
@@ -248,18 +260,17 @@ class MLP:
                 plt.plot(range(0, len(tstErr)), tstErr, 'b')
                 plt.pause(0.000001)
 
-            if((j+1)%100==0):
+            if ((j + 1) % 100 == 0):
                 printlst = []
                 printlst.append(ERROR)
                 printlst.append(trnErr)
                 printlst.append(tstErr)
                 printlst = np.array(printlst)
-                printDF= pd.DataFrame(printlst)
-                csvname = "ErrRcrdFtrs"+str(len(inputs[0]))+"Hdn"+str(self.n_hidden)+\
-                           "Trn"+str(len(targets))+"Tst"+str(len(tstData))+"It"+str(j)+".csv"
+                printDF = pd.DataFrame(printlst)
+                csvname = "ErrRcrdFtrs" + str(len(inputs[0])) + "Hdn" + str(self.n_hidden) + \
+                          "Trn" + str(len(targets)) + "Tst" + str(len(tstData)) + "It" + str(j) + ".csv"
                 printDF.to_csv(csvname)
-        #plt.show()
-            
+                # plt.show()
 
     def fitSg(self, inputs, targets, tstData, tstKey, learning_rate=0.01, n_epochs=20000):
         '''Train the weights of a custom network by computing activations from feedforward
@@ -282,14 +293,14 @@ class MLP:
                 # Squared euclidean distance cost function
                 # Compute the error and derivative error of output layers' neurons
                 if depth == self.n_layer - 1:
-                    #print("shape check", targets_b.shape, self.A[depth].shape)
-                    self.cost = self.cost_sqrd_euc(targets_b, self.A[depth])
-                    self.dC[depth] = self.cost_sqrd_euc(targets_b, self.A[depth], derivative=1)  # Derivative of the squared euclidean distance
-                    self.dW[depth] = np.multiply(self.dC[depth], self._dsigmoid(self.A[depth])) # Haddamard product
+                    # print("shape check", targets_b.shape, self.A[depth].shape)
+                    self.cost = self.costfunc(targets_b, self.A[depth])
+                    self.dC[depth] = self.costfunc(targets_b, self.A[depth], derivative=1)  # Derivative of the squared euclidean distance
+                    self.dW[depth] = np.multiply(self.dC[depth], self._dsoftmax(self.A[depth]))  # Haddamard product
                 # Compute the error and derivative error of hidden layers' neurons
                 else:
                     self.dC[depth] = np.dot(self.dW[depth + 1], self.W[depth + 1].T)
-                    self.dW[depth] = np.multiply(self.dC[depth], self._dsigmoid(self.A[depth])) # Haddamard product
+                    self.dW[depth] = np.multiply(self.dC[depth], self._dsigmoid(self.A[depth]))  # Haddamard product
 
                 # Update weights based on contribution of neuron to error
                 # if input layer
@@ -305,17 +316,17 @@ class MLP:
                 ERROR.append(np.sum(self.cost))
                 trnErr.append(self.testAccuracy(inputs, targets))
                 tstErr.append(self.testAccuracy(tstData, tstKey))
-                
-                #print("Trn Error,", trnErr,"Tst Error,", tstErr)
-            if((j+1)%10==0):
+
+                # print("Trn Error,", trnErr,"Tst Error,", tstErr)
+            if ((j + 1) % 10 == 0):
                 printlst = []
                 printlst.append(ERROR)
                 printlst.append(trnErr)
                 printlst.append(tstErr)
                 printlst = np.array(printlst)
-                printDF= pd.DataFrame(printlst)
-                csvname = "ErrRcrdFtrs"+str(len(inputs[0]))+"Hdn"+str(self.n_hidden)+\
-                           "Trn"+str(len(targets))+"Tst"+str(len(tstData))+"It"+str(j)+".csv"
+                printDF = pd.DataFrame(printlst)
+                csvname = "ErrRcrdFtrs" + str(len(inputs[0])) + "Hdn" + str(self.n_hidden) + \
+                          "Trn" + str(len(targets)) + "Tst" + str(len(tstData)) + "It" + str(j) + ".csv"
                 printDF.to_csv(csvname)
 
                 # Show cost function and performance results
@@ -333,14 +344,13 @@ class MLP:
 
         plt.show()
 
-    #jmw
+    # jmw
     ###candidate for deletion, all it does is call feed forward
     def predict(self, i):
         '''Returns the output of the network given an input matching input neurons'''
-        #i is 1d vector of input data
+        # i is 1d vector of input data
         return self.feedforward(i)
 
-    
 
 if __name__ == "__main__":
     mlp = MLP(784, 100, 10, 1)
@@ -355,13 +365,12 @@ if __name__ == "__main__":
     #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
     print ('==========Extracting train set')
     trnLst, trnKey, tstLst, tstKey = \
-    ntf.read_trn_partial('data/1000trn100tst.csv', 28, 28, 1000, 100)
+        ntf.read_trn_partial('data/1000trn100tst.csv', 28, 28, 1000, 100)
 
-    #print(trnLst[0].shape)
+    # print(trnLst[0].shape)
     print ('==========Training...')
     mlp.fitSg(trnLst, trnKey, tstLst, tstKey, learning_rate=0.1, n_epochs=20000)
     print ('==========Training done')
-    
-    #mlp.testAccuracy(trnLst, trnKey)
-    #mlp.testAccuracy(tstLst, tstKey)
 
+    # mlp.testAccuracy(trnLst, trnKey)
+    # mlp.testAccuracy(tstLst, tstKey)
