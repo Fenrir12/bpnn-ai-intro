@@ -120,9 +120,7 @@ def read_train(digFile, rowcells, clmcells):
 # same as read_train, but no answerkey required
 def read_test(testFile, rowcells, clmcells):
     digitLst = []  # will hold 1D numpy vecs of the data
-
     testDF = pd.read_csv(testFile, header=0, index_col=False)
-
     digitLst = testDF.values.tolist()
 
     for i in range(len(digitLst)):
@@ -136,7 +134,6 @@ def read_test(testFile, rowcells, clmcells):
 # size of testing set, gives answer key to testing to see
 # if learning is effective
 def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
-    print("1make it in")
     answerKey=[]
     digitLst=[]
     
@@ -146,10 +143,7 @@ def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
     tstKey = []  # this will hold the actual value of the digit entry
     tstLst = []  # will hold 1D numpy vecs of the data
     
-    print("2make it in")
     trainDf = pd.read_csv(digFile, header=0, index_col=False)
-    print("3make it in")
-    
     
     #This function takes a long time to run so decomment these lines if you
     #will be running the same training and testing set over and over
@@ -180,11 +174,10 @@ def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
         for i in range(numTrn, numTrn+numTst):
             tstLst.append(compress(digitLst[i], rowcells, clmcells))
             tstKey.append(digtoHotVec(answerKey[i]))          
-
-    
+  
     trnLst = normalize(trnLst)
     tstLst = normalize(tstLst)
-    print("10make it in")
+
     return trnLst, trnKey, tstLst, tstKey
 
 #########   Explanation  #######################
@@ -198,7 +191,6 @@ def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
 # step: 	the batch number to produce, makes sure covers whole data
 #########   Output  #######################
 # will output numpy array of [size x digit features]
-
 def batchify(digitLst, target_vector, size, step):
     numsteps = int(len(digitLst) / size) - 1
 
