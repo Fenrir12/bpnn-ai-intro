@@ -219,10 +219,10 @@ class MLP:
                 # Update weights based on contribution of neuron to error
                 if depth == 0:
                     #jmwbig
-                    self.W[depth] -= np.dot(batch.T, self.dW[depth]) * learning_rate
+                    self.W[depth] -= np.dot(batch.T, self.dW[depth]) * self.alpha
                 else:
-                    self.W[depth] -= np.dot(self.A[depth - 1].T, self.dW[depth]) * learning_rate
-                self.B[depth] -= np.mean(self.dW[depth], axis=0) * learning_rate
+                    self.W[depth] -= np.dot(self.A[depth - 1].T, self.dW[depth]) * self.alpha
+                self.B[depth] -= np.mean(self.dW[depth], axis=0) * self.alpha
             if (j % 10) == 0:
                 print("Error:" + str(np.mean(np.abs(self.dC[self.n_layer - 1]))))
                 ERROR.append(np.mean(np.abs(self.cost)))
