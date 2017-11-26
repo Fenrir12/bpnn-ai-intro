@@ -28,18 +28,20 @@ class MLP:
         self.n_input = lyrNodes[0]
         self.n_output = lyrNodes[-1]
         self.n_layer = len(lyrNodes) - 1
-        self.batch_size = batch_size
-        self.hiddenActv = hiddenActv
-        self.outputActv = outputActv
-        self.costFnc = costFnc
-        self.n_epochs = n_epochs
+        self.batch_size = batch_size # Number of samples going through one feedforward and backprop
+        self.hiddenActv = hiddenActv # Activation function for hidden layers
+        self.outputActv = outputActv # Activation function for output layer
+        self.costFnc = costFnc # Cost function used for error and gradient descent
+        self.n_epochs = n_epochs # Number of epochs for learning
         self.alpha = lrnRate  # learning rate parameter
         self.lmda = regParam  # regularization parameter
-        self.cost = 0
+        self.mntmRate = 1.0 # Momentum factor
+        self.cost = 0 # initialize cost value
         self.W = [0.0] * self.n_layer  # Weight of neurons in each layers
         self.A = [0.0] * self.n_layer  # Output of neurons in each layers
         self.dC = [0.0] * self.n_layer  # Derivative of cost function
         self.dW = [0.0] * self.n_layer  # Rate of change of cost function for each neurons
+        self.update = [0.0] * self.n_layer # Store update vector for next update with momentum
         self.B = [0.0] * self.n_layer  # Bias term of each neuron
 
         # Initialize weights and biases of layers according to depth of network
@@ -49,10 +51,12 @@ class MLP:
         if self.n_layer == 1:
             self.W[0] = np.random.normal(scale=0.1, size=(self.n_input, self.n_output))
             self.B[0] = np.random.normal(scale=0.1, size=(1, self.n_output))
+            self.update[0] = np.zeros((self.n_input, self.n_output))
         else:
             for depth in range(0, len(lyrNodes) - 1):
                 self.W[depth] = np.random.normal(scale=0.1, size=(lyrNodes[depth], lyrNodes[depth + 1]))
                 self.B[depth] = np.random.normal(scale=0.1, size=(1, lyrNodes[depth + 1]))
+                self.update[depth] = np.zeros((1, lyrNodes[depth + 1]))
 
     # jmw
     #########   Explanation  #######################
@@ -205,14 +209,14 @@ class MLP:
             # Update weights based on contribution of neuron to error and weight regularization
             # if input layer
             if (depth == 0):
-                lrnupdate = (np.dot(inputs.T, self.dW[depth])) * self.alpha
+                self.update[depth] = (np.dot(inputs.T, self.dW[depth])) * self.alpha + self.mntmRate*self.update[depth]
                 regularized = self.W[depth] * (1 - self.alpha * self.lmda / len(inputs))
-                self.W[depth] = regularized - lrnupdate
+                self.W[depth] = regularized - self.update[depth]
 
             if (depth != 0):
-                lrnupdate = (np.dot(self.A[depth - 1].T, self.dW[depth])) * self.alpha
+                self.update[depth] = (np.dot(self.A[depth - 1].T, self.dW[depth])) * self.alpha + self.mntmRate*self.update[depth]
                 regularized = self.W[depth] * (1 - self.alpha * self.lmda / len(inputs))
-                self.W[depth] = regularized - lrnupdate
+                self.W[depth] = regularized - self.update[depth]
 
             # then update bias
             self.B[depth] -= np.mean(self.dW[depth], axis=0) * self.alpha
@@ -227,7 +231,6 @@ class MLP:
         numsteps = int(len(inputs) / batch_size) - 1
         print("num inputs", len(inputs))
         print("numsteps", numsteps)
-        print(self.n_epochs)
 
         for j in range(self.n_epochs):
             btchstp = j % numsteps
@@ -235,6 +238,7 @@ class MLP:
             # Apply feed forward for epoch
             self.feedforward(batch)
 
+            # Update weights and bias with backpropagation
             self.backprop(batch, targets_b)
 
             ERROR.append(self.cost)
@@ -277,6 +281,7 @@ if __name__ == "__main__":
     mlp.batch_size = 100
     mlp.n_epochs = 1000
     mlp.alpha = 0.01
+    mlp.mntmRate = 0.0
     mlp.outputActv = 'softmax'
     mlp.costFnc = 'xentropy'
     # Test XOR, AND, OR and NOR inputs and targets
