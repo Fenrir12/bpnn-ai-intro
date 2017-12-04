@@ -3,5 +3,7 @@ This repository contains the latest versions for a custom backpropagation artifi
 
 # Getting started
 1. cd into your workspace
-2. type : 
-  a. git clone
+2. type the following commands in your terminal: 
+'''
+git clone 
+'''
