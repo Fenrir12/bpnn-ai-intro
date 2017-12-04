@@ -316,7 +316,7 @@ if __name__ == "__main__":
     
     print ('==========Extracting train set')
     trnLst, trnKey, tstLst, tstKey = \
-        ntf.read_trn_partial('data/mnsitTrain.csv', 28, 28, 40000, 2000)
+        ntf.read_trn_partial('data/1000trn100tst.csv', 28, 28, 1000, 100)
             
     #testing lambda reg parameter
     for i in range(4):
