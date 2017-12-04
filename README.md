@@ -13,7 +13,8 @@ cd bpnn-ai-intro
 Note : The base code will train a model on a small dataset of 1000 training samples and 100 testing samples.
        To change the dataset to train with, go into src/MLP_v5.py at line 319 and change .csv file to use custom dataset and parameters 4 and 5 to fit your training and testing set sizes.
        
-4. Train the neural network on this dataset and look at the graphs to see the training progress.
+4. Train the neural network on this dataset and waituntil the end tog et the results.
+By uncommenting lines 295 to 306, you can get graphic visualization of the learning progresses
 ```
 python MLP_v5.py
 ```
