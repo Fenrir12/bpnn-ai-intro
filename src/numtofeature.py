@@ -192,10 +192,7 @@ def read_trn_partial(digFile, rowcells, clmcells, numTrn, numTst):
 #########   Output  #######################
 # will output numpy array of [size x digit features]
 def batchify(digitLst, target_vector, size, step):
-    numsteps = int(len(digitLst) / size) - 1
 
-    # Debug
-    # print(step*size + size , len(digitLst) )
 
     if (step * size + size > len(digitLst)):
         print("***ERRROR : Step causes too small of a batch")
@@ -206,13 +203,11 @@ def batchify(digitLst, target_vector, size, step):
         for i in range(1, size):
             tmp = digitLst[step * size + i]
             tmp2 = target_vector[step * size + i]
-            # 1d batch
-            # batch = np.concatenate((batch, digitLst[step*size+i]), axis=0)
+
             # 2d batch
             batch = np.vstack((batch, tmp))
             target_b = np.vstack((target_b, tmp2))
-        # debug
-        # print("Batch return", type(batch), type(batch[0]))
+
         if size == 1:
             return [target_b], [batch]
         else:

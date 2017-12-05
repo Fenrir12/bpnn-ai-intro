@@ -5,6 +5,7 @@ import numtofeature as ntf
 import pandas as pd
 from random import sample
 
+#used for debugging
 def wait():
     # programPause = raw_input("Press the <ENTER> key to continue...")
     programPause = input("Press the <ENTER> key to continue...")
@@ -22,8 +23,8 @@ class MLP:
         and partial derivatives of errors (D)
         lyrNodes: list of ints specifying number of Nodes(neurons), in each layer
                     order of [layer input, hidden0,hidden1...hiddenN,Output]
-        lrnRate = learning rate, alpha, for weight updates in backprops
-        batch_size = number of training examples into each batch
+        lrnRate : learning rate, alpha, for weight updates in backprops
+        batch_size : number of training examples into each batch
         
         n_epochs = number of training iterations to use with backprop
         costFunc : 'xentropy' or 'sqrdEuc'    
@@ -33,7 +34,7 @@ class MLP:
         regParam : regularization parameter used for weighted distance, if using dropout
                     set to zero can be any int, but higher number may degrade accuracy
         dropPrtn : portion of neurons in hidden layer to dropout for regularization. 
-                    Not used in weightedDist, must be a decimal recomended .1=.5 
+                    Not used in weightedDist, must be a decimal recomended .1-.5 
         momentum : momentum factor to change learning rate in back prop
                     based on magnitude of last error.  If don't want to use set
                     to zero. Any int.
@@ -102,8 +103,8 @@ class MLP:
         accuracy = 100 - 100 * float(inaccurate / len(tstLst))
         return accuracy
 
-    # jmw
     # this function takes a matrix, threshholds and scales it accrodingly
+    #  corrected some issues with numerical instability
     def threshold(self, matrix, lowthresh=.001, upthresh=1):
         mtrxmin = np.amin(matrix)
         if mtrxmin < lowthresh:
@@ -115,7 +116,6 @@ class MLP:
             matrix = matrix * maxmult
         return matrix
 
-    # jmw
     # elementwise version of ReLU equation
     def softplusElement(self, x):
         # approximate of ReLU that you can take a derivative of
@@ -124,7 +124,6 @@ class MLP:
         y = np.log(tmp)
         return y
 
-    # jmw
     # elementwise version of derivative of ReLU equation
     def dsoftplusElement(self, x):
         y = 1 / (1 + np.exp(-x))
@@ -150,6 +149,7 @@ class MLP:
     def _softmax(self, batch_o):
         return np.array([np.exp(x) / np.exp(x).sum() for x in batch_o])
 
+    #aggregates activation functions listed above
     def _activation(self, x, activationFct, derivative=False):
         if activationFct == 'sigmoid':
             if derivative:
@@ -166,7 +166,8 @@ class MLP:
                 return self._dsigmoid(x)
             else:
                 return self._softmax(x)
-
+            
+    #calculates cost for output layer, and derivative cost for delta costs updates
     def costfunc(self, targets, outputs, derivative=0):
         if self.costFnc == 'sqrdEuc':
             if derivative == 1:
@@ -320,7 +321,7 @@ if __name__ == "__main__":
             
     #testing lambda reg parameter
     for i in range(4):
-        mlp = MLP([784, 135, 10])
+        mlp = MLP([784, 100, 10])
         mlp.hiddenActv = 'softplus'
         mlp.batch_size = 17
         mlp.n_epochs = 800
@@ -330,16 +331,6 @@ if __name__ == "__main__":
         mlp.costFnc = 'xentropy'
         mlp.regMthd = 'weightedDst'
         mlp.lmda = 0 + i
-        # Test XOR, AND, OR and NOR inputs and targets
-        # inputs = np.array([[[0, 0], [0, 1], [1, 0], [1, 1]],
-        #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
-        #                    [[0, 0], [0, 1], [1, 0], [1, 1]],
-        #                    [[0, 0], [0, 1], [1, 0], [1, 1]]])
-        # targets = np.array([[[0, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
-        #                     [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 1, 0, 0]],
-        #                     [[0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 1, 0], [0, 0, 1, 0]],
-        #                     [[0, 0, 0, 1], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]])
-
 
         # print(trnLst[0].shape)
         print('==========Training Session: '+str(i))
